@@ -16,7 +16,7 @@ The following **stretch** user stories are implemented:
 - [x] User sees an alert when there's a networking error (+1pt)
 - [x] While poster is being fetched, user see's a placeholder image (+1pt)
 - [x] User sees image transition for images coming from network, not when it is loaded from cache (+1pt)
-- [ ] Customize the selection effect of the cell (+1pt)
+- [x] Customize the selection effect of the cell (+1pt)
 
 The following **additional** user stories are implemented:
 
