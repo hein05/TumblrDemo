@@ -82,7 +82,7 @@ class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDe
 //            let smallSizeStr = small_400Size["url"] as! String
             
             let url = URL(string: urlStr)
-            photoCell.postImg.af_setImage(withURL: url!, imageTransition: .crossDissolve(2.0))
+            photoCell.postImg.af_setImage(withURL: url!,placeholderImage:#imageLiteral(resourceName: "TumblrDemoIcon"), imageTransition: .crossDissolve(2.0))
         }
         return photoCell
     }
