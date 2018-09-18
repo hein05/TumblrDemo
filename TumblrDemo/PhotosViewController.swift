@@ -32,7 +32,6 @@ class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDe
         tableView.insertSubview(refreshCtrl, at: 0)
         
         refreshCtrl.addTarget(self, action: #selector(PhotosViewController.pullToRefresh(_:)), for: .valueChanged)
-
     }
     
     @objc func pullToRefresh (_ refreshCtrl: UIRefreshControl) {
@@ -87,6 +86,30 @@ class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDe
         return photoCell
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let vc = segue.destination as! PhotoDetailsViewController
+        let cell = sender as! UITableViewCell
+        let indexPath = tableView.indexPath(for: cell)
+        let post = self.post[(indexPath?.row)!]
+
+        if let photos = post["photos"] as? [[String: Any]] {
+            let photo = photos[0]
+            let originalSize = photo["original_size"] as! [String:Any]
+            let urlStr = originalSize["url"] as! String
+            
+            //            let smallerSize = photo["alt_sizes"] as! [[String:Any]]
+            //            let small_400Size = smallerSize[4]
+            //            let smallSizeStr = small_400Size["url"] as! String
+            
+            let url = URL(string: urlStr)
+            vc.photoURL = url
+        }
+       
+    }
     
 
     /*
