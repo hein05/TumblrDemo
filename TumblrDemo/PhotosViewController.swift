@@ -6,16 +6,16 @@
 //  Copyright © 2018 Hein Soe. All rights reserved.
 //
 
-//TODO: Implement Each Cell Selection to Detail VC, then show New VC with Image and Text
-//TODO: Create Placeholder Image, Launch Image
+//TODO: Create Launch Image
 
 import UIKit
 import AlamofireImage
 
-class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDelegate {
+class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDelegate,UIScrollViewDelegate {
 
     var post:[[String: Any]] = []
-
+    static let bottomRefreshH:CGFloat = 60.0
+    
     var refreshCtrl:UIRefreshControl!
     
     @IBOutlet weak var loadingAnim: UIActivityIndicatorView!
@@ -32,6 +32,10 @@ class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDe
         tableView.insertSubview(refreshCtrl, at: 0)
         
         refreshCtrl.addTarget(self, action: #selector(PhotosViewController.pullToRefresh(_:)), for: .valueChanged)
+        loadingAnim.frame.origin.x = self.view.frame.width/2
+        loadingAnim.frame.origin.y = self.view.frame.height/2
+//        self.view.addSubview(loadingAnim)
+        
     }
     
     @objc func pullToRefresh (_ refreshCtrl: UIRefreshControl) {
@@ -56,6 +60,7 @@ class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDe
                 let dataDictionary = try! JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
                 let fetchedPhotos = dataDictionary["response"] as! [String:Any]
                 self.post = fetchedPhotos["posts"] as! [[String:Any]]
+                self.isMoreDatatLoading = false
                 self.tableView.reloadData()
                 self.loadingAnim.stopAnimating()
                 self.refreshCtrl.endRefreshing()
@@ -63,14 +68,49 @@ class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDe
         }
         task.resume()
     }
+    // MARK: Implementing Tableview
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return post.count
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = UIView(frame: CGRect(x: 0, y: 0, width: 320, height: 50))
+        headerView.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 0.906838613)
+        
+        let profileView = UIImageView(frame: CGRect(x: 10, y: 10, width: 30, height: 30))
+        profileView.clipsToBounds = true
+        profileView.layer.cornerRadius = 15
+        profileView.layer.borderColor = #colorLiteral(red: 0.8831892449, green: 0.8831892449, blue: 0.8831892449, alpha: 0.7984535531)
+        profileView.layer.borderWidth = 1
+        
+        profileView.af_setImage(withURL: URL(string: "https://api.tumblr.com/v2/blog/humansofnewyork.tumblr.com/avatar")!)
+        headerView.addSubview(profileView)
+        
+        let post = self.post[section]
+        let date = post["date"] as? String
+        
+        let label = UILabel(frame: CGRect(x: 50, y: 10, width: 500, height: 30))
+        
+        label.text = date
+        label.textColor = #colorLiteral(red: 0.09458656521, green: 0.1154079092, blue: 0.1404068845, alpha: 1)
+        
+        headerView.addSubview(label)
+        
+        return headerView
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 50.0
+    }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return post.count
+        return 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let photoCell = tableView.dequeueReusableCell(withIdentifier: "PhotoCell", for: indexPath) as! PhotoTableViewCell
-        let post = self.post[indexPath.row]
+        
+        let post = self.post[indexPath.section]
         if let photos = post["photos"] as? [[String: Any]] {
             let photo = photos[0]
             let originalSize = photo["original_size"] as! [String:Any]
@@ -90,11 +130,12 @@ class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDe
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
+    // MARK:Prepare for Segue
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let vc = segue.destination as! PhotoDetailsViewController
         let cell = sender as! UITableViewCell
         let indexPath = tableView.indexPath(for: cell)
-        let post = self.post[(indexPath?.row)!]
+        let post = self.post[(indexPath?.section)!]
 
         if let photos = post["photos"] as? [[String: Any]] {
             let photo = photos[0]
@@ -108,18 +149,23 @@ class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDe
             let url = URL(string: urlStr)
             vc.photoURL = url
         }
-       
     }
     
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+    var isMoreDatatLoading = false
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if(!isMoreDatatLoading) {
+            let scrollViewContentHeight = tableView.contentSize.height
+            let scrollOffsetThreshold = scrollViewContentHeight - tableView.bounds.size.height
+            
+            if (scrollView.contentOffset.y > scrollOffsetThreshold && tableView.isDragging) {
+                isMoreDatatLoading = true
+                
+                loadingAnim.frame.origin.y = tableView.bounds.size.height
+                loadingAnim.startAnimating()
+                self.fetchPhoto()
+            }
+        }
     }
-    */
-
+    
 }
