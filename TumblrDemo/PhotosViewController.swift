@@ -57,13 +57,20 @@ class PhotosViewController: UIViewController,UITableViewDataSource,UITableViewDe
             if (error != nil) {
                 self.networkError(fetch: self.fetchPhoto)
             } else if let data = data {
+                
                 let dataDictionary = try! JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
-                let fetchedPhotos = dataDictionary["response"] as! [String:Any]
-                self.post = fetchedPhotos["posts"] as! [[String:Any]]
-                self.isMoreDatatLoading = false
-                self.tableView.reloadData()
-                self.loadingAnim.stopAnimating()
-                self.refreshCtrl.endRefreshing()
+                if self.post.isEmpty && self.post.count != dataDictionary.count {
+                
+                    let fetchedPhotos = dataDictionary["response"] as! [String:Any]
+                    self.post = fetchedPhotos["posts"] as! [[String:Any]]
+                    self.isMoreDatatLoading = false
+                    self.tableView.reloadData()
+                    self.loadingAnim.stopAnimating()
+                    self.refreshCtrl.endRefreshing()
+                } else {
+                    self.loadingAnim.stopAnimating()
+                    self.loadingAnim.frame.origin.y = self.view.frame.height/2
+                }
             }
         }
         task.resume()
